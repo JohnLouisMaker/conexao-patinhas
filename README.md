@@ -6,17 +6,23 @@ Plataforma web para conectar animais disponíveis para adoção a pessoas intere
 
 ```
 backend/   → API REST (NestJS + TypeScript)
-frontend/  → Interface web (em breve)
+frontend/  → Interface Web (HTML + CSS + JavaScript + Tailwind CSS)
 ```
 
 ## Stack
 
 - **Backend:** NestJS, TypeScript, Prisma
-- **Frontend:** (a definir)
+- **Frontend:** HTML, CSS, JavaScript, Tailwind CSS
 - **Banco:** PostgreSQL
 - **Pacotes:** pnpm
 
 ## Como rodar
+
+```bash
+# Frontend
+cd frontend
+start index.html
+```
 
 ```bash
 # Backend
