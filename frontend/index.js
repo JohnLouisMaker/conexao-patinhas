@@ -1,4 +1,3 @@
-// Default Mock Pets if LocalStorage is empty
 const defaultPets = [
     {
         id: '1',
@@ -62,12 +61,10 @@ const defaultPets = [
     }
 ];
 
-// Global State
 let currentUser = JSON.parse(localStorage.getItem('amigo_fiel_user')) || null;
 let pets = JSON.parse(localStorage.getItem('amigo_fiel_pets')) || defaultPets;
 let authModeIsRegister = false;
 
-// Save to LocalStorage helper
 function saveState() {
     localStorage.setItem('amigo_fiel_pets', JSON.stringify(pets));
     localStorage.setItem('amigo_fiel_user', JSON.stringify(currentUser));
@@ -405,7 +402,6 @@ function showToast(message) {
     }, 3500);
 }
 
-// Inicialização segura no carregamento do DOM
 document.addEventListener('DOMContentLoaded', () => {
     updateAuthNav();
     renderPets();
