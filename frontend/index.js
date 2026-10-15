@@ -64,6 +64,7 @@ const defaultPets = [
 let currentUser = JSON.parse(localStorage.getItem('amigo_fiel_user')) || null;
 let pets = JSON.parse(localStorage.getItem('amigo_fiel_pets')) || defaultPets;
 let authModeIsRegister = false;
+const authApiUrl = 'http://localhost:3000/auth';
 
 function saveState() {
     localStorage.setItem('amigo_fiel_pets', JSON.stringify(pets));
@@ -280,35 +281,43 @@ function toggleAuthMode() {
     }
 }
 
-function handleAuthSubmit(e) {
+async function handleAuthSubmit(e) {
     e.preventDefault();
-    const email = document.getElementById('authEmail').value;
-    const nameInput = document.getElementById('authName').value;
+    const submitBtn = document.getElementById('authSubmitBtn');
+    const email = document.getElementById('authEmail').value.trim();
+    const senha = document.getElementById('authPassword').value;
+    const nome = document.getElementById('authName').value.trim();
 
-    if (authModeIsRegister) {
-        currentUser = {
-            uid: 'user_logged_' + email.split('@')[0],
-            name: nameInput || 'Usuário',
-            email: email
-        };
-        showToast('Conta criada com sucesso! Seja bem-vindo(a).');
-    } else {
-        currentUser = {
-            uid: 'user_logged_' + email.split('@')[0],
-            name: email.split('@')[0].toUpperCase(),
-            email: email
-        };
-        showToast('Login realizado com sucesso!');
+    submitBtn.disabled = true;
+    submitBtn.classList.add('opacity-70', 'cursor-wait');
+
+    try {
+        const response = await fetch(`${authApiUrl}/${authModeIsRegister ? 'register' : 'login'}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(authModeIsRegister ? { nome, email, senha } : { email, senha })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Não foi possível autenticar.');
+
+        currentUser = { uid: data.user.id, name: data.user.nome, email: data.user.email };
+        localStorage.setItem('amigo_fiel_access_token', data.accessToken);
+        saveState();
+        updateAuthNav();
+        closeAuthModal();
+        document.getElementById('authForm').reset();
+        showToast(authModeIsRegister ? 'Conta criada com sucesso! Seja bem-vindo(a).' : 'Login realizado com sucesso!');
+    } catch (error) {
+        showToast(error.message || 'Não foi possível conectar ao servidor.');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('opacity-70', 'cursor-wait');
     }
-
-    saveState();
-    updateAuthNav();
-    closeAuthModal();
-    document.getElementById('authForm').reset();
 }
 
 function logout() {
     currentUser = null;
+    localStorage.removeItem('amigo_fiel_access_token');
     saveState();
     updateAuthNav();
     navigateTo('home');

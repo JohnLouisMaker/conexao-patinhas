@@ -7,10 +7,10 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
-  getUsers() {
-    const allUsers: PublicUser[] = this.usersService
-      .getAllUsers()
-      .map(({ senhaHash: _senhaHash, ...user }) => user);
+  async getUsers() {
+    const allUsers: PublicUser[] = (await this.usersService.getAllUsers()).map(
+      ({ senhaHash: _senhaHash, ...user }) => user,
+    );
     return {
       users: allUsers,
     };

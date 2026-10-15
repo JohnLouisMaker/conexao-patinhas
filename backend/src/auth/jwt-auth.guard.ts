@@ -14,7 +14,7 @@ type AuthenticatedRequest = Request & { user: PublicUser };
 export class JwtAuthGuard implements CanActivate {
   constructor(private readonly authService: AuthService) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
     const [scheme, token] = request.headers.authorization?.split(' ') ?? [];
 
@@ -22,7 +22,7 @@ export class JwtAuthGuard implements CanActivate {
       throw new UnauthorizedException('Token de acesso não informado.');
     }
 
-    const user = this.authService.getUserFromAccessToken(token);
+    const user = await this.authService.getUserFromAccessToken(token);
     if (!user)
       throw new UnauthorizedException('Token de acesso inválido ou expirado.');
 
