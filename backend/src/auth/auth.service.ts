@@ -4,7 +4,12 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { createHmac, randomBytes, scrypt, timingSafeEqual } from 'node:crypto';
+import {
+  createHmac,
+  randomBytes,
+  scrypt,
+  timingSafeEqual,
+} from 'node:crypto';
 import { promisify } from 'node:util';
 import type { PublicUser, User } from '../users/users.entity.js';
 import { UsersService } from '../users/users.service.js';
@@ -17,6 +22,7 @@ export interface AuthInput {
   nome?: unknown;
   email?: unknown;
   senha?: unknown;
+  telefone?: unknown;
 }
 
 interface AccessTokenPayload {
@@ -31,27 +37,33 @@ export class AuthService {
   constructor(private readonly usersService: UsersService) {}
 
   async register(input: AuthInput) {
-    const { nome, email, senha } = this.validateInput(input, true);
+    const { nome, email, senha, telefone } = this.validateInput(input, true);
 
-    if (this.usersService.getUserByEmail(email)) {
+    if (await this.usersService.getUserByEmail(email)) {
       throw new ConflictException('Já existe uma conta com este e-mail.');
     }
 
-    const user: User = {
-      id: randomBytes(16).toString('hex'),
+    const user = {
       nome,
       email,
       senhaHash: await this.hashPassword(senha),
-      criadoEm: new Date(),
+      telefone,
     };
 
-    this.usersService.createUser(user);
-    return this.createAuthResponse(user);
+    try {
+      const createdUser = await this.usersService.createUser(user);
+      return this.createAuthResponse(createdUser);
+    } catch (error: unknown) {
+      if (this.isDuplicateEmailError(error)) {
+        throw new ConflictException('Já existe uma conta com este e-mail.');
+      }
+      throw error;
+    }
   }
 
   async login(input: AuthInput) {
     const { email, senha } = this.validateInput(input, false);
-    const user = this.usersService.getUserByEmail(email);
+    const user = await this.usersService.getUserByEmail(email);
 
     if (!user || !(await this.verifyPassword(senha, user.senhaHash))) {
       throw new UnauthorizedException('E-mail ou senha inválidos.');
@@ -60,18 +72,18 @@ export class AuthService {
     return this.createAuthResponse(user);
   }
 
-  getUserFromAccessToken(token: string): PublicUser | null {
+  async getUserFromAccessToken(token: string): Promise<PublicUser | null> {
     const payload = this.verifyAccessToken(token);
     if (!payload) return null;
 
-    const user = this.usersService.getUserById(payload.sub);
+    const user = await this.usersService.getUserById(payload.sub);
     return user ? this.toPublicUser(user) : null;
   }
 
   private validateInput(
     input: AuthInput,
     requiresName: boolean,
-  ): { nome: string; email: string; senha: string } {
+  ): { nome: string; email: string; senha: string; telefone: string | null } {
     if (!input || typeof input !== 'object') {
       throw new BadRequestException('Dados de autenticação inválidos.');
     }
@@ -80,6 +92,10 @@ export class AuthService {
     const email =
       typeof input.email === 'string' ? input.email.trim().toLowerCase() : '';
     const senha = typeof input.senha === 'string' ? input.senha : '';
+    const telefone =
+      typeof input.telefone === 'string' && input.telefone.trim()
+        ? input.telefone.trim()
+        : null;
 
     if (
       (requiresName && !nome) ||
@@ -93,7 +109,11 @@ export class AuthService {
       );
     }
 
-    return { nome, email, senha };
+    if (telefone && telefone.length > 30) {
+      throw new BadRequestException('O telefone deve ter no máximo 30 caracteres.');
+    }
+
+    return { nome, email, senha, telefone };
   }
 
   private async hashPassword(password: string): Promise<string> {
@@ -201,6 +221,15 @@ export class AuthService {
     )
       .update(value)
       .digest('base64url');
+  }
+
+  private isDuplicateEmailError(error: unknown): boolean {
+    return (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      error.code === '23505'
+    );
   }
 
   private encode(value: object): string {
