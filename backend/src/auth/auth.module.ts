@@ -8,5 +8,6 @@ import { JwtAuthGuard } from './jwt-auth.guard.js';
   imports: [UsersModule],
   controllers: [AuthController],
   providers: [AuthService, JwtAuthGuard],
+  exports: [AuthService, JwtAuthGuard],
 })
 export class AuthModule {}
