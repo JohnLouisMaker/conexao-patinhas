@@ -41,7 +41,7 @@ describe('AuthService', () => {
       email: 'ANA@example.com',
       senha: 'senha-segura-123',
     });
-    const profile = service.getUserFromAccessToken(result.accessToken);
+    const profile = await service.getUserFromAccessToken(result.accessToken);
 
     expect(profile).toMatchObject({ nome: 'Ana', email: 'ana@example.com' });
     expect(profile).not.toHaveProperty('senhaHash');
