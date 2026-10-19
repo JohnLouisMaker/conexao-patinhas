@@ -11,25 +11,29 @@ export const ANIMAL_SPECIES = ['Cachorro', 'Gato', 'Outro'] as const;
 export type AnimalSpecies = (typeof ANIMAL_SPECIES)[number];
 
 export interface Animal {
+  idBairro?: string;
+  idadeMeses?: number;
   id: string;
   nome: string;
   especie: AnimalSpecies;
-  raca: string;
-  idade: string;
-  porte: string;
+  raca?: string;
+  idade?: string;
+  porte?: string;
   bairro: string;
   cidade: string;
   estado: string;
   fotoUrl: string;
-  caracteristicas: string[];
-  descricao: string;
+  caracteristicas: string | string[];
+  descricao?: string;
   status: AnimalStatus;
   responsavelId: string;
   criadoEm: Date;
-  atualizadoEm: Date;
+  atualizadoEm?: Date;
 }
 
 export interface CreateAnimalInput {
+  idBairro?: unknown;
+  idadeMeses?: unknown;
   nome?: unknown;
   especie?: unknown;
   raca?: unknown;

@@ -1,4 +1,4 @@
-import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleDestroy, OnModuleInit, ServiceUnavailableException } from '@nestjs/common';
 import { Pool } from 'pg';
 import type { User } from './users.entity.js';
 
@@ -30,6 +30,17 @@ export class UsersService implements OnModuleInit, OnModuleDestroy {
     }
 
     this.pool = null;
+  }
+
+  get databaseEnabled(): boolean {
+    return this.pool !== null;
+  }
+
+  requirePool(): Pool {
+    if (!this.pool) {
+      throw new ServiceUnavailableException('Conexão com o banco não configurada.');
+    }
+    return this.pool;
   }
 
   async onModuleInit(): Promise<void> {

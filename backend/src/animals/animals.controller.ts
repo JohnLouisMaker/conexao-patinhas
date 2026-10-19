@@ -26,27 +26,32 @@ export class AnimalsController {
   constructor(private readonly animalsService: AnimalsService) {}
 
   @Get()
-  list(
+  async list(
     @Query('especie') especie?: string,
     @Query('bairro') bairro?: string,
     @Query('status') status?: string,
   ) {
-    return { animals: this.animalsService.list({ especie, bairro, status }) };
+    return {
+      animals: await this.animalsService.list({ especie, bairro, status }),
+    };
   }
 
   @Get('mine')
   @UseGuards(JwtAuthGuard)
-  listMine(@Req() request: AuthenticatedRequest) {
+  async listMine(@Req() request: AuthenticatedRequest) {
     return {
-      animals: this.animalsService.listForResponsible(request.user.id),
+      animals: await this.animalsService.listForResponsible(request.user.id),
     };
   }
 
   @Get(':id/interests')
   @UseGuards(JwtAuthGuard)
-  listInterests(@Param('id') id: string, @Req() request: AuthenticatedRequest) {
+  async listInterests(
+    @Param('id') id: string,
+    @Req() request: AuthenticatedRequest,
+  ) {
     return {
-      interests: this.animalsService.listInterests(id, request.user.id),
+      interests: await this.animalsService.listInterests(id, request.user.id),
     };
   }
 
@@ -96,8 +101,8 @@ export class AnimalsController {
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
-  delete(@Param('id') id: string, @Req() request: AuthenticatedRequest) {
-    this.animalsService.delete(id, request.user.id);
+  async delete(@Param('id') id: string, @Req() request: AuthenticatedRequest) {
+    await this.animalsService.delete(id, request.user.id);
     return { message: 'Anúncio removido com sucesso.' };
   }
 }
